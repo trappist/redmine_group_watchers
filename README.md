@@ -1,9 +1,14 @@
-# redmine_group_watchers
+# Redmine Group Watchers
+
+This is a plugin for Redmine 2.x which adds the possibility of adding groups as watchers on issues.
+
+To install:
 
 ```
-cd redmine_directory/plugins
+cd path_to_redmine/plugins
 git clone git@github.com:trappist/redmine_group_watchers.git
+cd ..
 rake db:migrate_plugins
 ```
 
-Restart Redmine
+And restart Redmine
