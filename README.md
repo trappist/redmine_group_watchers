@@ -1,4 +1,4 @@
-= redmine_group_watchers
+# redmine_group_watchers
 
 ```
 cd redmine_directory/plugins
