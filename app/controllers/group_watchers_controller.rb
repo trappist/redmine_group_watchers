@@ -17,6 +17,9 @@ class GroupWatchersController < ApplicationController
     end
   end
 
+  def new
+  end
+
   def destroy
     @watched.set_group_watcher(Principal.find(params[:group_id]||params[:user_id]), false) if request.post?
     respond_to do |format|

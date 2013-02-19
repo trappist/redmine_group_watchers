@@ -20,7 +20,6 @@ module Redmine
             attr_protected :group_watcher_ids, :watcher_user_ids
           end
           send :include, Redmine::Acts::GroupWatchable::InstanceMethods
-          puts "Loaded GroupWatchable"
         end
       end
 
@@ -32,6 +31,10 @@ module Redmine
         # Adds user as a watcher
         def add_group_watcher(group)
           self.group_watchers << GroupWatcher.new(:group => group)
+        end
+
+        def addable_watcher_groups
+          Group.sorted.where("id not in (?)", group_watcher_ids+[0])
         end
 
         # Removes user from the watchers list

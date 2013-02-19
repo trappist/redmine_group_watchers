@@ -7,4 +7,5 @@ match 'group_watchers/append', :controller=> 'group_watchers', :action => 'appen
 match 'group_watchers/destroy', :controller=> 'group_watchers', :action => 'destroy', :via => :post
 match 'group_watchers/watch', :controller=> 'group_watchers', :action => 'watch', :via => :post
 match 'group_watchers/unwatch', :controller=> 'group_watchers', :action => 'unwatch', :via => :post
+match 'group_watchers/autocomplete_for_user', :controller=> 'group_watchers', :action => 'autocomplete_for_user', :via => :get
 

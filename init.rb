@@ -3,6 +3,8 @@ ActionDispatch::Callbacks.to_prepare do
   require_dependency 'acts_as_group_watchable'
   ActiveRecord::Base.send(:include, Redmine::Acts::GroupWatchable)
   require_dependency 'patches'
+  # Let deface load from the plugin dir
+  Rails.application.paths.add "app/overrides", :with => ["plugins/#{File.basename(File.expand_path(File.dirname(__FILE__)))}/app/overrides"]
 end
 
 Redmine::Plugin.register :group_watchers do

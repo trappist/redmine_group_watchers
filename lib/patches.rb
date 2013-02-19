@@ -1,29 +1,38 @@
-module Redmine
-  module Acts
-    module Watchable
-      module InstanceMethods
-        def addable_watcher_users
-          users = self.project.users.sort - self.watcher_users
-          if respond_to?(:visible?)
-            users.reject! {|user| !visible?(user)}
-          end
-          groups = Group.sorted #- self.watcher_groups
-          groups + users
-        end
-      end
-    end
-  end
-end
-
-
 module GroupWatchers
 
   module Patches
+
+    module ApplicationHelperPatch
+      def self.included(base)
+        base.send(:include, InstanceMethods)
+        base.class_eval do
+          unloadable
+          alias_method_chain :principals_check_box_tags, :groups
+        end
+      end
+      module InstanceMethods
+        def principals_check_box_tags_with_groups(name, principals)
+          orig = principals_check_box_tags_without_groups(name, principals)
+          ids = @issue ? @issue.group_watcher_ids : []
+          groups = Group.sorted.where("id not in (?)", ids)
+          grhtml = groups.map do |group|
+            "<label>#{ check_box_tag name, group.id, false } #{h group}</label>\n"
+          end.join.html_safe
+          logger.warn("FOOOOO")
+          orig + grhtml + "foo"
+          #principals.sort.each do |principal|
+          #  s << "<label>#{ check_box_tag name, principal.id, false } #{h principal}</label>\n"
+          #end
+          #s.html_safe
+        end
+      end
+    end
 
     module IssueModelPatch
       def self.included(base)
         base.class_eval do
           acts_as_group_watchable
+          safe_attributes :watcher_group_ids #, :if => lambda {|issue, user| issue.new_record? || user.allowed_to?(:edit_issues, issue.project) }
         end
       end
     end
@@ -59,7 +68,7 @@ module GroupWatchers
           if params[:watcher].is_a?(Hash)
             principal_ids = params[:watcher][:user_ids] || [params[:watcher][:user_id]]
             @users  = User.active.where(:id => principal_ids)
-            @groups = Group.active.where(:id => principal_ids)
+            @groups = Group.where(:id => principal_ids)
           end
         end
       end
@@ -81,9 +90,9 @@ module GroupWatchers
         base.send(:include, InstanceMethods)
         base.class_eval do
           unloadable
+          alias_method_chain :watcher_link, :group
           alias_method_chain :watchers_list, :groups
           alias_method_chain :watchers_checkboxes, :groups
-          alias_method_chain :watcher_link, :group
         end
       end
       module InstanceMethods
@@ -117,25 +126,6 @@ module GroupWatchers
           content.present? ? content_tag('ul', content) : content
         end
 
-        def watchers_checkboxes_with_groups(object, users, checked=nil)
-          user_list = users.map do |user|
-            c = checked.nil? ? object.watched_by?(user) : checked
-            tag = check_box_tag 'issue[watcher_user_ids][]', user.id, c, :id => nil
-            content_tag 'label', "#{tag} #{h(user)}".html_safe,
-                        :id => "issue_watcher_user_ids_#{user.id}",
-                        :class => "floating"
-          end
-          splitter = ["</span></p><p><span><label>#{l(:label_issue_group_watchers)}</label>"]
-          group_list = Group.all.map do |group|
-            tag = check_box_tag 'issue[group_watcher_ids][]', group.id, object.group_watched_by?(group), :id => nil
-            content_tag 'label', "#{tag} #{h(group)}".html_safe,
-                        :id => "issue_watcher_group_ids_#{group.id}",
-                        :class => "floating"
-          end
-          closer = ["</p>"]
-          (user_list+splitter+group_list+closer).join.html_safe
-        end
-
         def watcher_link_with_group(object, user_or_group)
           if user_or_group.is_a?(User)
             return '' unless user_or_group && user_or_group.logged? && object.respond_to?('watched_by?')
@@ -151,6 +141,17 @@ module GroupWatchers
           url.merge!(:controller => 'group_watchers') if user_or_group.is_a?(Group)
           link_to((watched ? l(:button_unwatch) : l(:button_watch)), url,
                   :remote => true, :method => 'post', :class => (watched ? 'icon icon-fav' : 'icon icon-fav-off'))
+        end
+
+        def watchers_checkboxes_with_groups(object, users, checked=nil)
+          users.map do |user|
+            c = checked.nil? ? object.watched_by?(user) : checked
+            klass = user.is_a?(Group) ? "group" : "user"
+            tag = check_box_tag "issue[watcher_#{klass}_ids][]", user.id, c, :id => nil
+            content_tag 'label', "#{tag} #{h(user)}".html_safe,
+                        :id => "issue_watcher_#{klass}_ids_#{user.id}",
+                        :class => "floating"
+          end.join.html_safe
         end
 
       end
