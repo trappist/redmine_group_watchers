@@ -6,10 +6,10 @@ To install:
 
 ```
 cd path_to_redmine/plugins
-git clone git@github.com:trappist/redmine_group_watchers.git
+git clone git@github.com:trappist/redmine_group_watchers.git group_watchers
 cd ..
 bundle install
-rake redmine:plugins:migrate
+bundle exec rake redmine:plugins:migrate
 ```
 
 And restart Redmine
