@@ -13,10 +13,10 @@ module Redmine
             has_many :group_watchers, :as => :watchable, :dependent => :delete_all
             has_many :watcher_groups, :through => :group_watchers, :source => :group, :validate => false
 
-            scope :watched_by, lambda { |user_id|
-              { :include => [:watchers, :group_watchers],
-                :conditions => ["#{Watcher.table_name}.user_id = ? OR #{GroupWatcher.table_name}.group_id = ?", user_id, group_id] }
-            }
+            scope :watched_by, lambda { |user_id| { 
+              :include => [:watchers, :group_watchers],
+              :conditions => ["#{Watcher.table_name}.user_id = ? OR #{GroupWatcher.table_name}.group_id in (?)", user_id, User.find(user_id).group_ids] 
+            } }
             attr_protected :group_watcher_ids, :watcher_user_ids
           end
           send :include, Redmine::Acts::GroupWatchable::InstanceMethods
